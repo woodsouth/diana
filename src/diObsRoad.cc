@@ -135,7 +135,7 @@ void ObsRoad::readHeader(ObsDataRequest_cp request)
       line = "[COLUMNS";
       lines.push_back(line);
       // The fixed part..
-      line = "Name:id: Date:d: Time:t: Lat:lat: Lon:lon: ";
+      line = "StationName:s: Name:id: Date:d: Time:t: Lat:lat: Lon:lon: ";
       // the dynamic part
       // the data value parameters
       for (i = 0; i < params->size(); i++) {
@@ -536,6 +536,8 @@ void ObsRoad::decodeHeader()
       asciiColumn["image"] = i;
     else if (cn_lower == "name" || ct == "id")
       asciiColumn["Name"] = i;
+	else if (cn_lower == "stationname" && ct == "s")
+      asciiColumn["StationName"] = i;
 
     if (ct_lower == "ffk" || cn_lower == "ffk")
       knots = true;
@@ -1059,8 +1061,13 @@ void ObsRoad::decodeData()
     if (getColumnValue("y", pstr, value) || getColumnValue("Lat", pstr, value))
       if (value != _undef)
         obsData.ypos = value;
-    if (getColumnValue("Name", pstr, text))
+    if (getColumnValue("Name", pstr, text)) {
       obsData.id = text;
+	  obsData.metarId = text;
+	  obsData.put_string("Name", text);
+	}
+	if (getColumnValue("StationName", pstr, text))
+      obsData.put_string("StationName", text);
     if (getColumnValue("ff", pstr, value))
       if (value != _undef)
         obsData.put_float("ff", knots ? miutil::knots2ms(value) : value);
