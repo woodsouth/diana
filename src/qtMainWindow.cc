@@ -585,6 +585,14 @@ DianaMainWindow::DianaMainWindow(Controller* co, const QString& instancename)
   } else {
     autoUpdateAction = nullptr;
   }
+  // Sync time with other Diana instances
+  if (LocalSetupParser::basicValue("syncdianatime") == "true") {
+	sync_diana_time = true;
+  } else {
+	sync_diana_time = false;
+  }
+	
+  
 
   mainToolbar->addAction(showResetAreaAction);
 
@@ -1891,7 +1899,7 @@ void DianaMainWindow::processLetter(int fromId, const miQMessage &qletter)
   }
 
   else if (!handlingTimeMessage && ((command == qmstrings::settime && qletter.findCommonDesc("time") == 0) ||
-                                    (command == qmstrings::timechanged && qletter.findCommonDesc("time") == 0))) {
+                                    (command == qmstrings::timechanged && qletter.findCommonDesc("time") == 0 && sync_diana_time == true))) {
     const std::string l_common = qletter.getCommonValue(0).toStdString();
     miutil::miTime t(l_common);
     handlingTimeMessage = true;

@@ -270,6 +270,7 @@ private:
   BrowserBox* browser; // shows plot-stack
   bool updateBrowser();// update browser-window
   bool doAutoUpdate;
+  bool sync_diana_time;
 
   int displayWidth,displayHeight;
 
