@@ -182,7 +182,7 @@ void StationDialog::showStationNamesActivated(bool)
 }
 
 void StationDialog::selectSet(const QItemSelection& current)
-{
+{ 
   setRefreshEnabled(!current.indexes().isEmpty());
 }
 
@@ -193,15 +193,17 @@ void StationDialog::updateTimes()
 
 void StationDialog::reloadSets()
 {
+  // Use this interakivily.
   QItemSelectionModel* selectionModel = selectedStationPlotList->selectionModel();
   for (QModelIndex index : selectionModel->selectedRows(1)) {
     std::string url = index.data().toString().toStdString();
     QModelIndex nameIndex = chosenModel->index(index.row(), 0);
     std::string name = nameIndex.data().toString().toStdString();
-    if (show_names)
-      m_ctrl->stationCommand("showPositionName", name, -1);
+    if (show_names) {
+	  m_ctrl->stationCommand("showPositionName", name, -1);
+	}
 
-#if 0 // FIXME leaks StationPlot*
+#if 0 // FIXME leaks StationPlot*, is this neccesarry.
     if (m_ctrl->getStationManager()->importStations(name, url))
       selectionModel->select(index, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 #endif
@@ -226,25 +228,62 @@ PlotCommand_cpv StationDialog::getOKString()
           m_ctrl->putStations(plot);
           dialogInfo.chosen[ssi.url] = true;
         }
-
         break;
       }
     }
-
     StationPlotCommand_p cmd = std::make_shared<StationPlotCommand>();
     cmd->name = ssi.name;
     cmd->url = ssi.url;
     cmd->select = (!dialogInfo.chosen[ssi.url]) ? "hidden" : "unselected";
+	cmd->show_names = (!show_names) ? "false" : "true";
     strings.push_back(cmd);
   }
   return strings;
 }
-
+// STATION Flygplatser_Norden /data/proj5/diana/NYVIS_DEV/Yngve.Einarsson/DIANA/diana_master/local/share/diana/products/Flygplatser.txt unselected true
 void StationDialog::putOKString(const PlotCommand_cpv& vstr)
 {
   METLIBS_LOG_SCOPE();
-  if (!vstr.empty())
-    METLIBS_LOG_ERROR("not implemented, sorry");
+   if (vstr.empty())
+    return;
+  updateDialog();
+  // Clear the chosenModel data
+  chosenInfo.sets.clear();
+  chosenInfo.chosen.clear();
+  show_names = false;
+  // Loop through all the stationInfos from setup
+  for (const stationSetInfo& ssi : dialogInfo.sets) {
+    dialogInfo.chosen[ssi.url] = false;	
+	// loop through all PlotInfo's
+	for (PlotCommand_cp pc : vstr) {
+		StationPlotCommand_cp cmd = std::dynamic_pointer_cast<const StationPlotCommand>(pc);
+		// if match, check if hidden or unselected.
+		if (ssi.url == cmd->url) {			
+			if (cmd->select=="unselected") {
+				dialogInfo.chosen[cmd->url] = true;
+				// Append ssi to chosenInfo
+				chosenInfo.sets.push_back(ssi);
+				chosenInfo.chosen[cmd->url] = true;
+				for (int i = 0; i < model->rowCount(); ++i) {
+					QModelIndex index = model->index(i, 0);
+					std::string url = index.data().toString().toStdString();
+					if (url == cmd->url) {
+						stationPlotList->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+						break;
+					}
+				}
+			}
+			if (cmd->show_names=="true") {
+				show_names = true;
+				m_ctrl->stationCommand("showPositionName", cmd->name, -1);
+			}
+		}
+		
+    }
+ }
+ showStationNames->setChecked(show_names);
+ model->updateData(dialogInfo);
+ chosenModel->updateData(chosenInfo);
 }
 
 std::string StationDialog::getShortname()

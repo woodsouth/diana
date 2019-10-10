@@ -43,6 +43,7 @@ public:
   std::string name;
   std::string url;
   std::string select;
+  std::string show_names;
 
   static std::shared_ptr<const StationPlotCommand> fromString(const std::string& line);
 };

@@ -80,7 +80,6 @@ protected:
   void processInputPE(const PlotCommand_cpv& inp) override;
 
 private:
-  Station* parseSMHI(const std::string& miLine, const std::string& url);
   Plot_xv::iterator findStationPlot(const std::string& name, int id, Plot_xv::iterator begin);
 
 private:

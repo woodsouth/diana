@@ -33,6 +33,9 @@
 #include <boost/algorithm/string/join.hpp>
 #include <sstream>
 
+#define MILOGGER_CATEGORY "diana.StationPlotCommand"
+#include <miLogger/miLogging.h>
+
 static const std::string STATION = "STATION";
 
 StationPlotCommand::StationPlotCommand()
@@ -50,7 +53,8 @@ std::string StationPlotCommand::toString() const
   s << STATION
     << ' ' << name // may contain spaces -- no quotes here!
     << ' ' << url
-    << ' ' << select;
+    << ' ' << select
+	<< ' ' << show_names;
   return s.str();
 }
 
@@ -59,6 +63,15 @@ StationPlotCommand_cp StationPlotCommand::fromString(const std::string& line)
 {
   StationPlotCommand_p cmd = std::make_shared<StationPlotCommand>();
   std::vector<std::string> pieces = miutil::split(line, " ");
+  
+  if (pieces.size() != 4)
+  {
+    METLIBS_LOG_ERROR("StationPlotCommand must contain 4 strings");
+	return cmd;
+  }
+  
+  cmd->show_names = pieces.back();
+  pieces.pop_back();
 
   cmd->select = pieces.back();
   pieces.pop_back();
