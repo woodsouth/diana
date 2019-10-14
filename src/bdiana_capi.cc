@@ -1146,10 +1146,13 @@ command_result Bdiana::handlePlotCommand(int& k)
     main.controller->keepCurrentArea(main.keeparea);
 
     main.commands(pcom);
-
+	// Quick fix for backwards compatibility
+#if 0
     if (!set_ptime(main))
       return cmd_fail;
-
+#else
+	set_ptime(main);
+#endif
     if (verbose)
       METLIBS_LOG_INFO("- updatePlots");
     if (!main.controller->hasData() && failOnMissingData) {
@@ -1988,5 +1991,7 @@ int diana_dealloc()
 {
   bdiana_instance.reset(0);
   milogger::system::selectSystem(milogger::system::SystemPtr());
+  if (application)
+    delete application;
   return DIANA_OK;
 }
