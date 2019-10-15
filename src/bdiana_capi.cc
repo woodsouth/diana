@@ -1122,7 +1122,13 @@ command_result Bdiana::handlePlotCommand(int& k)
   }
 
   if (getTimeChoice() != BdianaSource::USE_FIXEDTIME)
+#if 0
     fixedtime = ptime = miutil::miTime();
+#else 
+    ptime = miutil::miTime();
+  if (getTimeChoice() == BdianaSource::USE_REFERENCETIME)
+    fixedtime =  miutil::miTime();
+#endif
 
   if (plottype == plot_standard) {
     // -- normal plot
