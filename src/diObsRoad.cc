@@ -809,13 +809,13 @@ void ObsRoad::amountOfClouds_1_4(ObsData& dta, bool metar)
       if ((ppar = dta.get_unrotated_float("NS_A4")) != nullptr)
           Ns4 = *ppar;
       if ((ppar = dta.get_unrotated_float("HS_A1")) != nullptr)
-          hs1 = *ppar;
+          hs1 = (int)(*ppar+.5);
       if ((ppar = dta.get_unrotated_float("HS_A2")) != nullptr)
-          hs2 = *ppar;
+          hs2 =(int)(*ppar+.5);
       if ((ppar = dta.get_unrotated_float("HS_A3")) != nullptr)
-          hs3 = *ppar;
+          hs3 = (int)(*ppar+.5);
       if ((ppar = dta.get_unrotated_float("HS_A4")) != nullptr)
-          hs4 = *ppar;
+          hs4 = (int)(*ppar+.5);
         
   } else {
       // manual station or metar
@@ -828,13 +828,13 @@ void ObsRoad::amountOfClouds_1_4(ObsData& dta, bool metar)
       if ((ppar = dta.get_unrotated_float("NS4")) != nullptr)
           Ns4 = *ppar;
       if ((ppar = dta.get_unrotated_float("HS1")) != nullptr)
-          hs1 = *ppar;
+          hs1 = (int)(*ppar+.5);
       if ((ppar = dta.get_unrotated_float("HS2")) != nullptr)
-          hs2 = *ppar;
+          hs2 = (int)(*ppar+.5);
       if ((ppar = dta.get_unrotated_float("HS3")) != nullptr)
-          hs3 = *ppar;
+          hs3 = (int)(*ppar+.5);
       if ((ppar = dta.get_unrotated_float("HS4")) != nullptr)
-          hs4 = *ppar;
+          hs4 = (int)(*ppar+.5);
   }
   // if metar station do not report Ns1 ... Ns4 and hs1 .. hs4 try Nh and h
   if (metar) {
@@ -851,7 +851,7 @@ void ObsRoad::amountOfClouds_1_4(ObsData& dta, bool metar)
     } else
       ost.setNum(Ns4);
     ost += "-";
-    ost += QString::number(hs4);
+    ost += QString::asprintf("%02i",hs4);
     dta.cloud.push_back(ost.toStdString());
   }
   if (Ns3 != _undef && Ns3 > 0 && hs3 != _undef && hs3 > 0) {
@@ -861,7 +861,7 @@ void ObsRoad::amountOfClouds_1_4(ObsData& dta, bool metar)
     } else
       ost.setNum(Ns3);
     ost += "-";
-    ost += QString::number(hs3);
+    ost += QString::asprintf("%02i",hs3);
     dta.cloud.push_back(ost.toStdString());
   }
   if (Ns2 != _undef && Ns2 > 0 && hs2 != _undef && hs2 > 0) {
@@ -871,7 +871,7 @@ void ObsRoad::amountOfClouds_1_4(ObsData& dta, bool metar)
     } else
       ost.setNum(Ns2);
     ost += "-";
-    ost += QString::number(hs2);
+    ost += QString::asprintf("%02i",hs2);
     dta.cloud.push_back(ost.toStdString());
   }
   if (Ns1 != _undef && Ns1 > 0 && hs1 != _undef && hs1 > 0) {
@@ -881,7 +881,7 @@ void ObsRoad::amountOfClouds_1_4(ObsData& dta, bool metar)
     } else
       ost.setNum(Ns1);
     ost += "-";
-    ost += QString::number(hs1);
+    ost += QString::asprintf("%02i",hs1);
     dta.cloud.push_back(ost.toStdString());
   }
 }
