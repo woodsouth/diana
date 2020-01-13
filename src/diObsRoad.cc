@@ -969,7 +969,9 @@ void ObsRoad::decodeData()
             value = miutil::to_float(pstr[i]);
             if (value == 2.) {
               obsData.put_string(m_columnName[i], "OK");
-			  obsData.CAVOK=true;
+			  // Fixme, needed ?
+			  //obsData.CAVOK=true;
+			  obsData.CAVOK=false;
             } else if (value == 1.) { // Clouds
               obsData.put_string(m_columnName[i], "NSC");
             } else if (value == 3.) { // Clouds

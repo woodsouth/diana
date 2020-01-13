@@ -2117,7 +2117,7 @@ void ObsPlot::plotSynop(DiGLPainter* gl, int index)
 				printString(gl, dta.cloud[i], xytab(lpos + 18) + QPointF(0, -i * 12) + QPointF(-12,10));
 		}
 	} else {
-		if ((ClFlag)|| pFlag.count("rrr")) {
+		if ((ClFlag)|| pFlag.count("rrr") || pFlag.count("W1")) {
 			for (int i = 0; i < ncl; i++)
 				printString(gl, dta.cloud[i], xytab(lpos + 24) + QPointF(0, -i * 12) + QPointF(0, -10));
 		} else {
