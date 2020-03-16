@@ -63,7 +63,10 @@
 #include <puCtools/stat.h>
 
 #include <tiffio.h>
-#include <projects.h>
+#include <proj.h>
+#ifndef ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
+#endif
 #include <proj_api.h>
 
 #include <cstdio>
@@ -76,6 +79,15 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <errno.h>
+
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+#ifndef TRUE
+#  define TRUE  1
+#endif
+
 
 using namespace miutil;
 using namespace satimg;
@@ -2126,7 +2138,7 @@ int metno::satimgh5::HDF5_head_diana(const string& infile, dihead &ginfo)
   
   METLIBS_LOG_DEBUG("ginfo.channel: " << ginfo.channel);
 
-  projUV data;
+  PJ_UV data;
   // Map from gHead to gInfo.
   if (hdf5map.count("place"))
 	ginfo.satellite = hdf5map["place"];
@@ -2295,14 +2307,23 @@ int metno::satimgh5::HDF5_head_diana(const string& infile, dihead &ginfo)
     METLIBS_LOG_DEBUG("projdef: " <<  hdf5map["projdef"]);
     ginfo.proj_string = hdf5map["projdef"];
   } else {
-    // FIXME this does not work, +units=km +x_0=.. +y_0=.. will be
-    // added below to an otherwise empty proj4 string
     ginfo.proj_string.clear();
+	// default 
+	ginfo.proj_string = "+proj=stere +lat_ts=60 +lat_0=90.0 +lon_0=14 +ellps=WGS84";
   }
 
+// Let Diana recalculate this if present.
+  if((ginfo.proj_string.find("+units=m ") != string::npos)||(ginfo.proj_string.find("+units=m ") != string::npos)) {
+		double value;
+		proj4_value(ginfo.proj_string, "+units", value, true);
+		proj4_value(ginfo.proj_string, "+x_0", value, true);
+		proj4_value(ginfo.proj_string, "+y_0", value, true);
+  }
+
+  
   if (ginfo.hdf5type == radar) {
     PJ *ref;
-
+		
     if (!(ref = pj_init_plus(ginfo.proj_string.c_str()))) {
       METLIBS_LOG_ERROR("Bad proj string: " << ginfo.proj_string);
       return -1;
@@ -2318,24 +2339,32 @@ int metno::satimgh5::HDF5_head_diana(const string& infile, dihead &ginfo)
 		data.u = 0;
     data.u *= DEG_TO_RAD;
     data.v *= DEG_TO_RAD;
-    data = pj_fwd(data, ref);
+	//data=proj_trans(ref,PJ_FWD,data);
+	
+	PJ_LP lp_data;
+	lp_data.lam = data.u;
+	lp_data.phi = data.v;
+	PJ_XY xy_data;
+    xy_data = pj_fwd(lp_data, ref);
+	data.u = xy_data.x;
+	data.v = xy_data.y;
 
     if (data.u == HUGE_VAL) {
       METLIBS_LOG_ERROR("data conversion error");
     }
-    ginfo.Bx = data.u / denominator;
+    //ginfo.Bx = data.u;
+    //ginfo.By = data.v;
+	ginfo.Bx = data.u / denominator;
     ginfo.By = data.v / denominator + ginfo.ysize * ginfo.Ay;
 
     pj_free(ref);
 
   } else if (ginfo.hdf5type == msg) {
-	if (hdf5map.count("projdef"))
-		METLIBS_LOG_DEBUG("projdef:" << hdf5map["projdef"]);
+
     PJ *ref;
-	// Projection must be defined..
-	if (!hdf5map.count("projdef"))
-	  return -1;
-    if ( ! (ref = pj_init_plus(hdf5map["projdef"].c_str()))) {
+
+    if (!(ref = pj_init_plus(ginfo.proj_string.c_str()))) {
+      METLIBS_LOG_ERROR("Bad proj string: " << ginfo.proj_string);
       return -1;
     }
 	if (hdf5map.count("center_lon"))
@@ -2348,7 +2377,14 @@ int metno::satimgh5::HDF5_head_diana(const string& infile, dihead &ginfo)
 		data.v = 0;
     data.u *= DEG_TO_RAD;
     data.v *= DEG_TO_RAD;
-    data = pj_fwd(data, ref);
+    //data = pj_fwd(data, ref);
+	PJ_LP lp_data;
+	lp_data.lam = data.u;
+	lp_data.phi = data.v;
+	PJ_XY xy_data;
+    xy_data = pj_fwd(lp_data, ref);
+	data.u = xy_data.x;
+	data.v = xy_data.x;
 
     if (data.u == HUGE_VAL) {
       METLIBS_LOG_ERROR("data conversion error");
@@ -2370,20 +2406,22 @@ int metno::satimgh5::HDF5_head_diana(const string& infile, dihead &ginfo)
 
   ginfo.AIr = 0;
   ginfo.BIr = 0;
-
+  
   // Dont add x_0 or y_0 if they are already there!
   if (ginfo.proj_string.find("+x_0=") == string::npos) {
+
     std::ostringstream tmp_proj_string;
-    tmp_proj_string << ginfo.proj_string;
+	tmp_proj_string << ginfo.proj_string;
+
     if (denominator == 1000.0)
       tmp_proj_string << " +units=km";
     else
       tmp_proj_string << " +units=m";
     tmp_proj_string << " +x_0=" << ginfo.Bx * -denominator;
-    tmp_proj_string << " +y_0=" << (ginfo.By * -denominator) + (ginfo.Ay * ginfo.ysize * denominator) + 15; // FIXME why add 15 ???
+    tmp_proj_string << " +y_0=" << (ginfo.By * -denominator) + (ginfo.Ay * ginfo.ysize * denominator);
 
     ginfo.proj_string = tmp_proj_string.str();
-  }
+  } 
 
   METLIBS_LOG_DEBUG(LOGVAL(ginfo.Ax) << LOGVAL(ginfo.Ay) << LOGVAL(ginfo.Bx) << LOGVAL(ginfo.By) << LOGVAL(trueLat) << LOGVAL(gridRot)
                                      << LOGVAL(ginfo.proj_string));

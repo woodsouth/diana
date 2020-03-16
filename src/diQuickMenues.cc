@@ -38,10 +38,11 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
-#include <regex>
+#include <boost/regex.hpp>
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 #define MILOGGER_CATEGORY "diana.QuickMenues"
 #include <miLogger/miLogging.h>
@@ -468,14 +469,15 @@ std::string updateLine(std::string line)
 
 bool updateCommandSyntax(std::vector<std::string>& lines)
 {
+  METLIBS_LOG_SCOPE();
   std::vector<std::string> updated;
 
-  static const std::regex RE_MAP_AREA("(MAP.*) area=([^ ]+)(.*)", std::regex::icase);
+  static const boost::regex RE_MAP_AREA("(MAP.*) area=([^ ]+)(.*)", boost::regex::icase);
   for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it) {
-    std::string uline = updateLine(*it);
+	std::string uline = updateLine(*it);
 
-    std::smatch what;
-    if (std::regex_match(uline, what, RE_MAP_AREA)) {
+    boost::smatch what;
+    if (boost::regex_match(uline, what, RE_MAP_AREA)) {
       if (updated.empty())
         updated.insert(updated.end(), lines.begin(), it);
       updated.push_back("AREA name=" + what.str(2));
